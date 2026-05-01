@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>VGSpeed</title>
+  <style>
+    :root{
+      --bg:#1a1a1a;
+      --panel:#141414;
+      --text:#eaeaea;
+      --muted:#9aa0a6;
+      --c1:#00e5ff;
+      --c2:#7c4dff;
+      --c3:#00e676;
+      --c4:#ff5252;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,system-ui,Arial;}
+    .wrap{height:100%;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;}
+    .card{
+      width:100%;
+      height:100%;
+      background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,0.08);
+      box-sizing:border-box;
+      padding:16px;
+      position:relative;
+      overflow:hidden;
+    }
+    .glow{
+      position:absolute;inset:-40%;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(0,229,255,0.18), transparent 45%),
+        radial-gradient(circle at 80% 30%, rgba(124,77,255,0.16), transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(0,230,118,0.10), transparent 55%);
+      filter: blur(22px);
+      pointer-events:none;
+    }
+    .content{position:relative;height:100%;display:flex;flex-direction:column;gap:14px;}
+    .title{display:flex;align-items:center;justify-content:space-between;}
+    .title h1{font-size:14px;margin:0;color:var(--muted);letter-spacing:.2px;}
+    .stage{font-size:12px;color:var(--muted);}
+    .actions{display:flex;gap:10px;align-items:center;}
+    .btn{
+      background:rgba(0,0,0,0.25);
+      border:1px solid rgba(255,255,255,0.14);
+      color:var(--text);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      transition: transform .08s ease, border-color .12s ease, background .12s ease;
+    }
+    .btn:active{transform: scale(0.98);}
+    .btnPrimary{
+      border-color: rgba(0,230,118,0.55);
+      box-shadow: 0 0 18px rgba(0,230,118,0.18);
+    }
+    .btnDanger{
+      border-color: rgba(255,82,82,0.55);
+      box-shadow: 0 0 18px rgba(255,82,82,0.14);
+    }
+    .btn:disabled{opacity:.45;cursor:default;transform:none;}
+    .gaugeRow{flex:1;display:flex;align-items:center;justify-content:center;}
+    .gauge{
+      width:380px;max-width:100%;
+      aspect-ratio: 1.35 / 1;
+      position:relative;
+    }
+    .value{
+      position:absolute;left:0;right:0;top:58%;
+      transform:translateY(-50%);
+      text-align:center;
+    }
+    .mbps{font-size:34px;font-weight:700;letter-spacing:.2px;text-shadow:0 0 18px rgba(0,229,255,0.20);}
+    .label{margin-top:2px;font-size:12px;color:var(--muted);}
+    .small{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:10px;
+    }
+    .box{
+      background:rgba(0,0,0,0.25);
+      border:1px solid rgba(255,255,255,0.08);
+      border-radius:10px;
+      padding:10px;
+      min-height:56px;
+    }
+    .box .k{font-size:11px;color:var(--muted);}
+    .box .v{margin-top:4px;font-size:15px;font-weight:600;}
+
+    .needle{
+      filter: drop-shadow(0 0 10px rgba(0,229,255,0.45));
+    }
+    .tick{
+      fill:rgba(255,255,255,0.18);
+      font-size:10px;
+    }
+    .arcBg{stroke:rgba(255,255,255,0.10);}
+    .arc{
+      stroke:url(#grad);
+      filter: drop-shadow(0 0 10px rgba(124,77,255,0.25));
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="glow"></div>
+      <div class="content">
+        <div class="title">
+          <h1>VGSpeed</h1>
+          <div class="actions">
+            <button class="btn btnPrimary" id="startBtn">Начать тест</button>
+            <button class="btn btnDanger" id="cancelBtn" disabled>Отмена</button>
+          </div>
+        </div>
+        <div class="stage" id="stage">готово к тесту</div>
+
+        <div class="gaugeRow">
+          <div class="gauge">
+            <svg viewBox="0 0 380 250" width="100%" height="100%">
+              <defs>
+                <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0" stop-color="#00e5ff"/>
+                  <stop offset="0.5" stop-color="#7c4dff"/>
+                  <stop offset="1" stop-color="#00e676"/>
+                </linearGradient>
+              </defs>
+
+              <!-- semi circle -->
+              <path class="arcBg" d="M 40 190 A 150 150 0 0 1 340 190" stroke-width="16" fill="none" stroke-linecap="round"/>
+              <path class="arc"   d="M 40 190 A 150 150 0 0 1 340 190" stroke-width="16" fill="none" stroke-linecap="round"/>
+
+              <!-- ticks removed -->
+
+              <!-- needle (base points to the right; we rotate from -180..0 for left->right sweep) -->
+              <g class="needle" id="needle" transform="rotate(-180 190 190)">
+                <line x1="190" y1="190" x2="305" y2="190" stroke="#00e5ff" stroke-width="4" stroke-linecap="round"/>
+                <circle cx="190" cy="190" r="7" fill="#00e5ff"/>
+                <circle cx="190" cy="190" r="12" fill="rgba(0,229,255,0.10)"/>
+              </g>
+            </svg>
+
+            <div class="value">
+              <div class="mbps"><span id="mbps">—</span></div>
+              <div class="label"><span id="mbpsLabel" style="color:var(--muted);">Мбит/с</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="small">
+          <div class="box">
+            <div class="k">Ping</div>
+            <div class="v"><span id="ping">—</span> <span style="color:var(--muted);font-weight:500;">ms</span></div>
+          </div>
+          <div class="box">
+            <div class="k">Download</div>
+            <div class="v"><span id="down">—</span> <span style="color:var(--muted);font-weight:500;">Mbps</span></div>
+          </div>
+          <div class="box">
+            <div class="k">Upload</div>
+            <div class="v"><span id="up">—</span> <span style="color:var(--muted);font-weight:500;">Mbps</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const elStage = document.getElementById('stage');
+    const elNeedle = document.getElementById('needle');
+    const elMbps = document.getElementById('mbps');
+    const elPing = document.getElementById('ping');
+    const elDown = document.getElementById('down');
+    const elUp = document.getElementById('up');
+    const elStartBtn = document.getElementById('startBtn');
+    const elCancelBtn = document.getElementById('cancelBtn');
+
+    let currentAngle = -180;
+    let targetAngle = -180;
+    let rafStarted = false;
+    let uiStage = 'ready';
+    let lastPercent = 0;
+    // Gauge shows Mbps clamped to 0..100 when available; otherwise follows percent.
+    let targetSpeedMbps = null;
+    let displaySpeedMbps = 0;
+
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+    function renderNeedleAngle(angle){
+      elNeedle.setAttribute('transform', `rotate(${angle} 190 190)`);
+    }
+
+    function startNeedleLoop(){
+      if(rafStarted) return;
+      rafStarted = true;
+      const step = () => {
+        if(targetSpeedMbps !== null){
+          const diffS = targetSpeedMbps - displaySpeedMbps;
+          const k = diffS >= 0 ? 0.10 : 0.06; // slower decay looks nicer
+          displaySpeedMbps += diffS * k;
+          const shown = clamp(displaySpeedMbps, 0, 100);
+          elMbps.textContent = fmt1(shown);
+          targetAngle = -180 + (shown * 180 / 100);
+        } else {
+          const p = clamp(lastPercent, 0, 100);
+          targetAngle = -180 + (p * 180 / 100);
+        }
+
+        // Always ease towards targetAngle for perfectly smooth motion,
+        // even when host updates arrive in bursts.
+        const diff = targetAngle - currentAngle;
+        currentAngle += diff * 0.12;
+        renderNeedleAngle(currentAngle);
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+
+    // Map 0..100% to needle angle (-180..0) to match the semi-gauge.
+    function setNeedlePercent(p){
+      const clamped = clamp(p, 0, 100);
+      targetAngle = -180 + (clamped * 180 / 100);
+      startNeedleLoop();
+    }
+
+    function fmt1(v){
+      if(v === null || v === undefined) return '—';
+      if(!isFinite(v)) return '—';
+      return (Math.round(v*10)/10).toFixed(1);
+    }
+
+    function setStage(stage, percent){
+      const p = (percent ?? 0);
+      if(stage === 'ping') elStage.textContent = 'ping…';
+      else if(stage === 'download') elStage.textContent = `⬇ загрузка… ${Math.round(p)}%`;
+      else if(stage === 'upload') elStage.textContent = `⬆ отдача… ${Math.round(p)}%`;
+      else if(stage === 'done' || stage === 'finished') elStage.textContent = 'готово';
+      else if(stage === 'error') elStage.textContent = 'ошибка';
+      else if(stage === 'starting') elStage.textContent = 'старт…';
+      else if(stage === 'ready') elStage.textContent = 'готово к тесту';
+      else elStage.textContent = '…';
+    }
+
+    function applyData(d){
+      if(!d) return;
+      uiStage = d.stage ?? uiStage;
+      lastPercent = d.percent ?? lastPercent;
+      setStage(uiStage, lastPercent);
+
+      if(d.stage === 'starting'){
+        elMbps.textContent = '—';
+        elPing.textContent = '—';
+        elDown.textContent = '—';
+        elUp.textContent = '—';
+        targetSpeedMbps = null;
+        displaySpeedMbps = 0;
+        setNeedlePercent(0);
+      }
+
+      if(d.stage === 'ready'){
+        elCancelBtn.disabled = true;
+        elStartBtn.disabled = false;
+      }
+
+      if(d.pingMs !== undefined && d.pingMs !== null) elPing.textContent = Math.round(d.pingMs);
+
+      if(d.downloadMbps !== undefined){
+        elDown.textContent = d.downloadMbps == null ? '—' : fmt1(d.downloadMbps);
+        if(uiStage === 'download' || uiStage === 'done' || uiStage === 'finished'){
+          if(d.downloadMbps != null){
+            targetSpeedMbps = clamp(d.downloadMbps, 0, 100);
+            startNeedleLoop();
+          } else {
+            targetSpeedMbps = null;
+            setNeedlePercent(Math.min(100, d.percent ?? 0));
+          }
+        }
+      }
+
+      if(d.uploadMbps !== undefined){
+        elUp.textContent = d.uploadMbps == null ? '—' : fmt1(d.uploadMbps);
+        if(uiStage === 'upload'){
+          if(d.uploadMbps != null){
+            targetSpeedMbps = clamp(d.uploadMbps, 0, 100);
+            startNeedleLoop();
+          } else {
+            targetSpeedMbps = null;
+            setNeedlePercent(Math.min(100, d.percent ?? 0));
+          }
+        } else if(uiStage === 'done' || uiStage === 'finished') {
+          if(d.downloadMbps == null && d.uploadMbps != null){
+            targetSpeedMbps = clamp(d.uploadMbps, 0, 100);
+            startNeedleLoop();
+          }
+        }
+      }
+    }
+
+    // WebView2 host messages
+    if(window.chrome && window.chrome.webview){
+      window.chrome.webview.addEventListener('message', (ev) => {
+        let data = ev.data;
+        try{
+          if(typeof data === 'string') data = JSON.parse(data);
+        }catch(e){}
+        applyData(data);
+      });
+
+      elStartBtn.addEventListener('click', () => {
+        elStartBtn.disabled = true;
+        elCancelBtn.disabled = false;
+        applyData({stage:'starting', percent:0});
+        window.chrome.webview.postMessage({cmd:'start'});
+      });
+
+      elCancelBtn.addEventListener('click', () => {
+        elCancelBtn.disabled = true;
+        window.chrome.webview.postMessage({cmd:'cancel'});
+      });
+    } else {
+      // dev fallback
+      applyData({stage:'download', percent:35, pingMs: 42, downloadMbps: 120.3, uploadMbps: 18.4});
+    }
+  </script>
+</body>
+</html>

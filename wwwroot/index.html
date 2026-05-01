@@ -1,0 +1,487 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Nebula with Shooting Stars | Mobile Background</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            background: transparent !important;
+        }
+
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: transparent !important;
+            touch-action: none;
+        }
+
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .info, .title, .credits {
+            display: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <script>
+        (function () {
+            // Проверка что Three.js загружен
+            if (typeof THREE === 'undefined') {
+                console.error('Three.js not loaded');
+                return;
+            }
+
+            // --- Setup Scene, Camera, Renderer ---
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x020214);
+            scene.fog = new THREE.FogExp2(0x020214, 0.0006);
+
+            const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 2000);
+            camera.position.set(0, 0.8, 4.2);
+            camera.lookAt(0, 0, -0.5);
+
+            const renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                alpha: true,
+                premultipliedAlpha: false
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ReinhardToneMapping;
+            renderer.toneMappingExposure = 1.15;
+            renderer.setClearColor(0x000000, 0);
+            document.body.appendChild(renderer.domElement);
+
+            // ========================
+            // Круглая текстура
+            // ========================
+            function createRoundTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 64;
+                canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+
+                ctx.clearRect(0, 0, 64, 64);
+
+                const gradient = ctx.createRadialGradient(32, 32, 0, 32, 32, 30);
+                gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.9)');
+                gradient.addColorStop(0.6, 'rgba(200, 200, 200, 0.5)');
+                gradient.addColorStop(0.85, 'rgba(150, 150, 150, 0.15)');
+                gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                ctx.beginPath();
+                ctx.arc(32, 32, 30, 0, 2 * Math.PI);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.format = THREE.RGBAFormat;
+                texture.needsUpdate = true;
+                return texture;
+            }
+
+            const roundTexture = createRoundTexture();
+
+            // ========================
+            // 1. НЕБУЛЯРНЫЕ ЧАСТИЦЫ
+            // ========================
+            const particleCount = 4200;
+            const positions = new Float32Array(particleCount * 3);
+            const colors = new Float32Array(particleCount * 3);
+
+            const palette = [
+                new THREE.Color(0x5a3d9e), new THREE.Color(0x8b3cbf), new THREE.Color(0x3a6ea5),
+                new THREE.Color(0x2c8c9e), new THREE.Color(0x6aa9d0), new THREE.Color(0xb87cff),
+                new THREE.Color(0xff8c6b), new THREE.Color(0xcc6b8f), new THREE.Color(0x4d6eff)
+            ];
+
+            for (let i = 0; i < particleCount; i++) {
+                const radiusXZ = 2.0 + Math.random() * 2.8;
+                const angle = Math.random() * Math.PI * 2;
+                const offsetFactor = Math.sin(angle * 5) * 0.2;
+                const x = Math.cos(angle) * (radiusXZ + offsetFactor);
+                const z = Math.sin(angle) * (radiusXZ + offsetFactor * 0.8);
+                const y = (Math.random() - 0.5) * 1.6 + Math.sin(angle * 2) * 0.35 + Math.cos(angle * 3) * 0.2;
+
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+
+                const colorPick = palette[Math.floor(Math.random() * palette.length)];
+                const intensity = 0.55 + Math.random() * 0.55;
+                const rVar = (Math.random() - 0.5) * 0.25;
+                const gVar = (Math.random() - 0.5) * 0.3;
+                const bVar = (Math.random() - 0.5) * 0.2;
+                colors[i * 3] = Math.min(1.0, Math.max(0.2, colorPick.r * intensity + rVar));
+                colors[i * 3 + 1] = Math.min(1.0, Math.max(0.15, colorPick.g * intensity + gVar));
+                colors[i * 3 + 2] = Math.min(1.0, Math.max(0.3, colorPick.b * intensity + bVar));
+            }
+
+            const nebulaGeometry = new THREE.BufferGeometry();
+            nebulaGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            nebulaGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            const nebulaMaterial = new THREE.PointsMaterial({
+                size: 0.055,
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.75,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                alphaTest: 0.1,
+                map: roundTexture
+            });
+
+            const nebulaPoints = new THREE.Points(nebulaGeometry, nebulaMaterial);
+            scene.add(nebulaPoints);
+
+            // ========================
+            // 2. ЗВЁЗДНЫЙ ФОН
+            // ========================
+            const starCount = 2500;
+            const starPositions = new Float32Array(starCount * 3);
+            for (let i = 0; i < starCount; i++) {
+                starPositions[i * 3] = (Math.random() - 0.5) * 220;
+                starPositions[i * 3 + 1] = (Math.random() - 0.5) * 80;
+                starPositions[i * 3 + 2] = (Math.random() - 0.5) * 100 - 50;
+            }
+            const starGeo = new THREE.BufferGeometry();
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+            const starMat = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.07,
+                transparent: true,
+                opacity: 0.65,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                alphaTest: 0.1,
+                map: roundTexture
+            });
+            const starField = new THREE.Points(starGeo, starMat);
+            scene.add(starField);
+
+            // ========================
+            // 3. МЕРЦАЮЩИЕ ЗВЁЗДЫ
+            // ========================
+            const twinkleCount = 1200;
+            const twinklePositions = new Float32Array(twinkleCount * 3);
+            for (let i = 0; i < twinkleCount; i++) {
+                twinklePositions[i * 3] = (Math.random() - 0.5) * 55;
+                twinklePositions[i * 3 + 1] = (Math.random() - 0.5) * 30;
+                twinklePositions[i * 3 + 2] = (Math.random() - 0.5) * 50 - 25;
+            }
+            const twinkleGeo = new THREE.BufferGeometry();
+            twinkleGeo.setAttribute('position', new THREE.BufferAttribute(twinklePositions, 3));
+            const twinkleMat = new THREE.PointsMaterial({
+                color: 0xffeebb,
+                size: 0.04,
+                transparent: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                alphaTest: 0.1,
+                map: roundTexture
+            });
+            const twinkleField = new THREE.Points(twinkleGeo, twinkleMat);
+            scene.add(twinkleField);
+
+            // Свет
+            const ambientLight = new THREE.AmbientLight(0x111122);
+            scene.add(ambientLight);
+            const backLight = new THREE.PointLight(0x553388, 0.7, 18);
+            backLight.position.set(0.8, 0.5, -2.5);
+            scene.add(backLight);
+            const fillLight = new THREE.PointLight(0x3377aa, 0.4);
+            fillLight.position.set(-1, 1, 1.5);
+            scene.add(fillLight);
+
+            // ========================
+            // СЛЕЖЕНИЕ ЗА КУРСОРОМ
+            // ========================
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            const trackTarget = new THREE.Vector3(0, 0, -0.5);
+            const trackSmooth = new THREE.Vector3(0, 0, -0.5);
+
+            function updateMouse(event) {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            }
+
+            function onTouchMove(event) {
+                if (event.touches.length > 0) {
+                    mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+                    mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+                }
+            }
+
+            window.addEventListener('mousemove', updateMouse, { passive: true });
+            window.addEventListener('touchmove', onTouchMove, { passive: true });
+
+            // ========================
+            // ПАДАЮЩИЕ ЗВЁЗДЫ
+            // ========================
+            class ShootingStar {
+                constructor() {
+                    this.active = false;
+                    this.progress = 0;
+                    this.speed = 0;
+                    this.startPoint = new THREE.Vector3();
+                    this.endPoint = new THREE.Vector3();
+                    this.lineObj = null;
+                    this.glowPoints = null;
+                    this.color = new THREE.Color();
+                }
+
+                init(x1, y1, z1, x2, y2, z2, speedFactor, colorHue) {
+                    this.startPoint.set(x1, y1, z1);
+                    this.endPoint.set(x2, y2, z2);
+                    this.speed = 0.007 + Math.random() * 0.013 * speedFactor;
+                    this.progress = 0;
+                    this.active = true;
+                    this.color.setHSL(colorHue, 0.95, 0.6);
+
+                    const trailCount = 28;
+                    const positions = new Float32Array(trailCount * 3);
+                    for (let i = 0; i < trailCount; i++) positions[i * 3] = positions[i * 3 + 1] = positions[i * 3 + 2] = 0;
+                    const lineGeo = new THREE.BufferGeometry();
+                    lineGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                    const lineMat = new THREE.LineBasicMaterial({
+                        color: this.color,
+                        transparent: true,
+                        opacity: 0.85,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    });
+                    this.lineObj = new THREE.Line(lineGeo, lineMat);
+
+                    const dotCount = 22;
+                    const dotPositions = new Float32Array(dotCount * 3);
+                    const dotColors = new Float32Array(dotCount * 3);
+                    for (let i = 0; i < dotCount; i++) {
+                        dotPositions[i * 3] = dotPositions[i * 3 + 1] = dotPositions[i * 3 + 2] = 0;
+                        dotColors[i * 3] = this.color.r;
+                        dotColors[i * 3 + 1] = this.color.g;
+                        dotColors[i * 3 + 2] = this.color.b;
+                    }
+                    const dotGeo = new THREE.BufferGeometry();
+                    dotGeo.setAttribute('position', new THREE.BufferAttribute(dotPositions, 3));
+                    dotGeo.setAttribute('color', new THREE.BufferAttribute(dotColors, 3));
+                    const dotMat = new THREE.PointsMaterial({
+                        size: 0.05,
+                        vertexColors: true,
+                        transparent: true,
+                        blending: THREE.AdditiveBlending,
+                        opacity: 0.9,
+                        depthWrite: false,
+                        alphaTest: 0.1,
+                        map: roundTexture
+                    });
+                    this.glowPoints = new THREE.Points(dotGeo, dotMat);
+
+                    scene.add(this.lineObj);
+                    scene.add(this.glowPoints);
+                }
+
+                update() {
+                    if (!this.active) return false;
+                    this.progress += this.speed;
+                    if (this.progress >= 1.0) {
+                        this.active = false;
+                        scene.remove(this.lineObj);
+                        scene.remove(this.glowPoints);
+                        if (this.lineObj) this.lineObj.geometry.dispose();
+                        if (this.glowPoints) this.glowPoints.geometry.dispose();
+                        return false;
+                    }
+
+                    const currentPos = this.startPoint.clone().lerp(this.endPoint, this.progress);
+                    const trailLengthRatio = 0.24;
+                    const numTrailPoints = 28;
+                    const positions = this.lineObj.geometry.attributes.position.array;
+
+                    for (let i = 0; i < numTrailPoints; i++) {
+                        const t = Math.max(0, this.progress - (i / numTrailPoints) * trailLengthRatio);
+                        const trailPos = this.startPoint.clone().lerp(this.endPoint, t);
+                        positions[i * 3] = trailPos.x;
+                        positions[i * 3 + 1] = trailPos.y;
+                        positions[i * 3 + 2] = trailPos.z;
+                    }
+                    this.lineObj.geometry.attributes.position.needsUpdate = true;
+
+                    const dotCount = 22;
+                    const dotPositions = this.glowPoints.geometry.attributes.position.array;
+                    const dotColorsArr = this.glowPoints.geometry.attributes.color.array;
+                    for (let i = 0; i < dotCount; i++) {
+                        const offset = (i / dotCount) * trailLengthRatio * 0.85;
+                        let trailT = Math.max(0, this.progress - offset);
+                        const glowPos = this.startPoint.clone().lerp(this.endPoint, trailT);
+                        dotPositions[i * 3] = glowPos.x + (Math.random() - 0.5) * 0.035;
+                        dotPositions[i * 3 + 1] = glowPos.y + (Math.random() - 0.5) * 0.035;
+                        dotPositions[i * 3 + 2] = glowPos.z + (Math.random() - 0.5) * 0.035;
+                        const brightness = 0.55 + Math.random() * 0.7;
+                        dotColorsArr[i * 3] = this.color.r * brightness;
+                        dotColorsArr[i * 3 + 1] = this.color.g * brightness;
+                        dotColorsArr[i * 3 + 2] = this.color.b * brightness;
+                    }
+                    this.glowPoints.geometry.attributes.position.needsUpdate = true;
+                    this.glowPoints.geometry.attributes.color.needsUpdate = true;
+                    return true;
+                }
+            }
+
+            const shootingStarsPool = [];
+            const MAX_STARS = 10;
+            for (let i = 0; i < MAX_STARS; i++) {
+                shootingStarsPool.push(new ShootingStar());
+            }
+
+            let frameCounter = 0;
+
+            function spawnShootingStar() {
+                const star = shootingStarsPool.find(s => !s.active);
+                if (!star) return;
+
+                const originSide = Math.floor(Math.random() * 4);
+                let startX, startY, startZ, endX, endY, endZ;
+
+                switch (originSide) {
+                    case 0:
+                        startX = -5.2 + Math.random() * 1.2;
+                        startY = (Math.random() - 0.5) * 4;
+                        startZ = (Math.random() - 0.5) * 7 - 1;
+                        endX = startX + 5.5 + Math.random() * 3.5;
+                        endY = startY + (Math.random() - 0.5) * 2.5;
+                        endZ = startZ - (Math.random() * 5 + 2);
+                        break;
+                    case 1:
+                        startX = 4.8 + Math.random() * 1.2;
+                        startY = (Math.random() - 0.5) * 4;
+                        startZ = (Math.random() - 0.5) * 7 - 1;
+                        endX = startX - 5.5 - Math.random() * 3.5;
+                        endY = startY + (Math.random() - 0.5) * 2.5;
+                        endZ = startZ - (Math.random() * 5 + 1.5);
+                        break;
+                    case 2:
+                        startX = (Math.random() - 0.5) * 7;
+                        startY = 2.8 + Math.random() * 1.2;
+                        startZ = (Math.random() - 0.5) * 6 - 1;
+                        endX = startX + (Math.random() - 0.5) * 6;
+                        endY = startY - 4 - Math.random() * 2.5;
+                        endZ = startZ - (Math.random() * 4 + 2);
+                        break;
+                    default:
+                        startX = (Math.random() - 0.5) * 7;
+                        startY = -2.5 + Math.random() * 1;
+                        startZ = (Math.random() - 0.5) * 6;
+                        endX = startX + (Math.random() - 0.5) * 5;
+                        endY = startY + 4.5 + Math.random() * 2.5;
+                        endZ = startZ - (Math.random() * 5 + 1.5);
+                        break;
+                }
+
+                const hue = 0.5 + Math.random() * 0.4;
+                const speedVar = 0.65 + Math.random() * 1.0;
+                star.init(startX, startY, startZ, endX, endY, endZ, speedVar, hue);
+            }
+
+            let time = 0;
+
+            // ========================
+            // АНИМАЦИЯ
+            // ========================
+            function animate() {
+                requestAnimationFrame(animate);
+                time += 0.007;
+
+                // Вращение туманности
+                nebulaPoints.rotation.y = time * 0.04;
+                nebulaPoints.rotation.x = Math.sin(time * 0.18) * 0.08;
+                nebulaPoints.rotation.z = Math.cos(time * 0.12) * 0.03;
+
+                starField.rotation.y = time * 0.015;
+                starField.rotation.x = time * 0.008;
+                twinkleField.rotation.y = time * 0.01;
+
+                // Пульсация света
+                backLight.intensity = 0.55 + Math.sin(time * 1.5) * 0.25;
+                fillLight.intensity = 0.35 + Math.sin(time * 1.2) * 0.15;
+
+                // Мерцание звёзд
+                twinkleMat.opacity = 0.5 + Math.sin(time * 8) * 0.2;
+                starMat.opacity = 0.55 + Math.sin(time * 4) * 0.15;
+
+                // Слежение за курсором
+                raycaster.setFromCamera(mouse, camera);
+                const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0.5);
+                const rawTarget = new THREE.Vector3();
+
+                if (raycaster.ray.intersectPlane(plane, rawTarget)) {
+                    trackTarget.lerp(rawTarget, 0.04);
+                    trackSmooth.lerp(trackTarget, 0.03);
+                }
+
+                const targetX = trackSmooth.x * 0.08;
+                const targetY = trackSmooth.y * 0.08;
+                nebulaPoints.position.x += (targetX - nebulaPoints.position.x) * 0.02;
+                nebulaPoints.position.y += (targetY - nebulaPoints.position.y) * 0.02;
+                camera.rotation.x += (-trackSmooth.y * 0.015 - camera.rotation.x) * 0.015;
+                camera.rotation.y += (trackSmooth.x * 0.015 - camera.rotation.y) * 0.015;
+
+                // Падающие звёзды
+                for (let star of shootingStarsPool) {
+                    star.update();
+                }
+
+                // Спавн падающих звёзд
+                frameCounter++;
+                if (frameCounter > 50 + Math.random() * 55) {
+                    if (shootingStarsPool.filter(s => s.active).length < 5) {
+                        spawnShootingStar();
+                    }
+                    frameCounter = 0;
+                }
+
+                if (Math.random() < 0.01 && shootingStarsPool.filter(s => s.active).length < 6) {
+                    spawnShootingStar();
+                }
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Начальные звёзды
+            setTimeout(() => {
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => spawnShootingStar(), i * 400);
+                }
+            }, 300);
+
+            // Адаптация под размер экрана
+            window.addEventListener('resize', onWindowResize, false);
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        })();
+    </script>
+</body>
+</html>

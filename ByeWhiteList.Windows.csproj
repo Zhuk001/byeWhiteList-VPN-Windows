@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<UseWindowsForms>true</UseWindowsForms>
+		<AssemblyName>byeWhiteList</AssemblyName>
+		<ApplicationIcon>assets\app.ico</ApplicationIcon>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<Version>1.0.0</Version>
+		<InformationalVersion>$(Version)</InformationalVersion>
+		<AssemblyVersion>1.0.0.0</AssemblyVersion>
+		<FileVersion>$(Version).0</FileVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Page Remove="App.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="App.xaml" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="MaterialDesignThemes" Version="4.9.0" />
+	  <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.6" />
+	  <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+	  <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+	  <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="wwwroot\index.html">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	  <None Update="wwwroot\speedtest.html">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
+</Project>

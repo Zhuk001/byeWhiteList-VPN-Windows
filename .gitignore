@@ -1,0 +1,12 @@
+﻿.vs/
+bin/
+obj/
+.dotnet_cli/
+.dotnet_cli_home/
+.dotnet_home/
+.localappdata/
+.nuget/
+Data/
+dist/publish/
+*.user
+*.tmp
