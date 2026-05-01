@@ -1,30 +1,86 @@
-﻿# byeWhiteList VPN (Windows)
+﻿# ByeWhiteList VPN (Windows)
 
-Open-source WPF VPN client for Windows with Xray (TUN mode), onboarding, routing profiles, and server testing.
+**ByeWhiteList VPN** — open-source Windows-клиент (WPF) для Xray в TUN-режиме с понятным интерфейсом, обучением при первом запуске и безопасной моделью локального трафика.
 
-## Download
-- Releases: https://github.com/Zhuk001/byeWhiteList-VPN-Windows/releases
+Репозиторий: [https://github.com/Zhuk001/byeWhiteList-VPN-Windows](https://github.com/Zhuk001/byeWhiteList-VPN-Windows)
 
-## Included in v1.0.0
-- First-run tutorial overlay.
-- Auto-download of `xray.exe` when missing.
-- Fallback install path for Xray to `%LocalAppData%\ByeWhiteList\bin` if app folder is not writable.
-- Stable VPN stop/exit flow (routes cleanup + xray process stop).
-- Updated installer (Inno Setup), custom icons, and admin launch support.
+---
 
-## Build
-```powershell
-dotnet publish .\ByeWhiteList.Windows.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o .\dist\publish
-```
+## Что умеет приложение
 
-Installer:
-```powershell
-& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ".\installer\byeWhiteList.iss"
-```
+- Подключение к VPN через `xray.exe` в режиме **TUN**.
+- Умная маршрутизация на базе `geosite.dat` / `geoip.dat`.
+- Обновление серверов, пинга и скорости прямо из интерфейса.
+- Выбор и сортировка серверов по качеству.
+- Кастомные группы серверов (добавление/редактирование/удаление).
+- Встроенное обучение (tutorial overlay) для новых пользователей.
+- Автоматическая подкачка `xray.exe`, если его нет в системе.
 
-## Requirements
-- Windows 10/11
-- Administrator rights for VPN routing operations (UAC)
+---
 
-## License
-See repository license file.
+## Безопасность и приватность
+
+### 1) Нет «открытого localhost-прокси» по умолчанию
+
+В отличие от некоторых клиентов, приложение **не держит постоянный открытый SOCKS/HTTP localhost-порт без авторизации**.
+
+### 2) Трафик тестов изолирован
+
+Для speedtest используются временные локальные прокси-процессы/порты, и после завершения они закрываются.
+
+### 3) TUN-модель маршрутизации
+
+VPN-трафик проходит через TUN, а правила DIRECT/VPN применяются централизованно через geosite/geoip и пользовательские исключения.
+
+### 4) Корректная остановка VPN
+
+При отключении VPN/закрытии приложения выполняется:
+- остановка `xray.exe`,
+- очистка маршрутов,
+- корректное завершение активного соединения.
+
+---
+
+## Первый запуск
+
+- Если `xray.exe` отсутствует, приложение предложит скачать его автоматически.
+- Если папка приложения недоступна для записи, используется `%LocalAppData%\ByeWhiteList\bin`.
+- Для VPN-операций используются права администратора (UAC).
+
+---
+
+## Установка
+
+### Вариант 1 — Setup (рекомендуется для большинства пользователей)
+
+Установщик ставит приложение в:
+
+`%LocalAppData%\Programs\ByeWhiteList-VPN`
+
+Это снижает проблемы с правами записи по сравнению с `Program Files`.
+
+### Вариант 2 — Portable
+
+Можно использовать портативную сборку (zip) из Releases.
+
+---
+
+## Системные требования
+
+- Windows 10 / 11 (x64)
+- Доступ в интернет для загрузки серверов/геоданных/первичного `xray.exe`
+- Права администратора для сетевых операций VPN
+
+---
+
+## Открытый исходный код
+
+Проект распространяется с открытым исходным кодом. Вы можете проверить логику маршрутизации, безопасность сетевой части и процесс работы с Xray напрямую в коде.
+
+---
+
+## Релизы
+
+Актуальные сборки доступны в разделе Releases:
+
+[https://github.com/Zhuk001/byeWhiteList-VPN-Windows/releases](https://github.com/Zhuk001/byeWhiteList-VPN-Windows/releases)
