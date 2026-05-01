@@ -1,70 +1,30 @@
-# byeWhiteList (Windows)
+﻿# byeWhiteList VPN (Windows)
 
-WPF‑клиент для запуска `xray` в TUN‑режиме на Windows с маршрутизацией на основе `geosite.dat/geoip.dat`.
+Open-source WPF VPN client for Windows with Xray (TUN mode), onboarding, routing profiles, and server testing.
 
-## Возможности
+## Download
+- Releases: https://github.com/Zhuk001/byeWhiteList-VPN-Windows/releases
 
-- Подключение к серверам (VLESS/VMess/Trojan/SS — зависит от ваших источников/ссылок).
-- TUN‑режим (перехват системного трафика) для системного трафика Windows.
-- Правила маршрутизации через `geosite/geoip`:
-  - для выбранной страны/профиля — **DIRECT** (мимо VPN),
-  - остальное — через **VPN/PROXY**,
-  - поверх правил можно добавить ручные исключения **DIRECT** / **VPN**.
-- Авто‑обновление geodata раз в неделю (опционально) + ручное обновление.
-- Ping/Speedtest по списку серверов.
+## Included in v1.0.0
+- First-run tutorial overlay.
+- Auto-download of `xray.exe` when missing.
+- Fallback install path for Xray to `%LocalAppData%\ByeWhiteList\bin` if app folder is not writable.
+- Stable VPN stop/exit flow (routes cleanup + xray process stop).
+- Updated installer (Inno Setup), custom icons, and admin launch support.
 
-## Варианты поставки
+## Build
+```powershell
+dotnet publish .\ByeWhiteList.Windows.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o .\dist\publish
+```
 
-Проект можно распространять двумя способами (оба варианта поддерживаются):
+Installer:
+```powershell
+& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ".\installer\byeWhiteList.iss"
+```
 
-1) **Портативная версия (рекомендуется)**
-- Скачали `*.zip`, распаковали, запустили `byeWhiteList.exe`.
-- В архиве уже лежит всё необходимое (включая `xray.exe` и geodata), ничего дополнительно качать не нужно.
+## Requirements
+- Windows 10/11
+- Administrator rights for VPN routing operations (UAC)
 
-2) **Установщик**
-- Скачали `Setup.exe`/`MSI`, установили как обычную программу.
-- В установку также включаются `xray.exe` и geodata.
-
-## Требования
-
-- Windows 10/11.
-- Права администратора нужны для добавления/удаления маршрутов и DNS override.
-
-Примечание про .NET:
-- Если релиз собран **self‑contained**, .NET отдельно не нужен.
-- Если релиз **framework‑dependent**, потребуется .NET Desktop Runtime 8.x.
-
-## Быстрый старт
-
-1. Скачайте релиз из **Releases** (портативный `.zip` или установщик).
-2. Запустите приложение (желательно от администратора).
-4. Добавьте сервер(а) или обновите список из источников.
-5. Выберите сервер → подключитесь.
-6. В “Настройки” → “Правила маршрутизации” выберите профиль и при необходимости добавьте исключения.
-
-## Маршрутизация (как это работает)
-
-Используется логика:
-
-- `tun-in` → по умолчанию **proxy**
-- выбранный профиль `geoip:XX` и/или `geosite:...` → **direct**
-- ваши исключения:
-  - вкладка **DIRECT** — всегда мимо VPN
-  - вкладка **VPN** — всегда через VPN
-
-## Безопасность (про localhost‑прокси)
-
-В некоторых VPN‑клиентах встречается проблема: локальный прокси на `127.0.0.1` поднимается без авторизации, и стороннее ПО на компьютере может подключиться к нему и вычислить внешний IP прокси.
-
-В `byeWhiteList`:
-
-- Постоянный локальный SOCKS‑прокси **по умолчанию отключён** и не запускается.
-- Speedtest использует локальный HTTP‑прокси **с авторизацией** и случайными учётными данными на каждый запуск (не подходит для простого “порт‑скана”).
-
-## Обновления
-
-План: распространять обновления через **GitHub Releases**. Для будущего авто‑обновления приложению понадобится стабильная ссылка на “latest release” и формат ассетов (например `ByeWhiteList.Windows-Setup.exe` или `ByeWhiteList.Windows-win-x64.zip`).
-
-## Дисклеймер
-
-Проект предназначен для ваших собственных конфигураций/серверов. Автор не предоставляет серверы и не несёт ответственности за их использование.
+## License
+See repository license file.

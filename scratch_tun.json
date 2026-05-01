@@ -1,0 +1,16 @@
+{
+  "log": {"loglevel": "warning"},
+  "inbounds": [
+    {
+      "tag": "tun-in",
+      "protocol": "tun",
+      "settings": {
+        "interfaceName": "xray0",
+        "address": ["10.0.236.2/24"],
+        "mtu": 1500,
+        "autoRoute": true
+      }
+    }
+  ],
+  "outbounds": [ {"protocol": "freedom", "tag": "direct"} ]
+}

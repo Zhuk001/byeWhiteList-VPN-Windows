@@ -1,0 +1,13 @@
+{
+  "log": {"loglevel": "warning"},
+  "inbounds": [ {"tag":"socks-in","protocol":"socks","listen":"127.0.0.1","port":10809,"settings":{"udp":true}} ],
+  "outbounds": [ {"protocol":"freedom","tag":"direct"}, {"protocol":"blackhole","tag":"block"} ],
+  "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {"type":"field","domain":["geosite:category-ru"],"outboundTag":"direct"},
+      {"type":"field","domain":["geosite:tld-ru"],"outboundTag":"direct"},
+      {"type":"field","ip":["geoip:ru"],"outboundTag":"direct"}
+    ]
+  }
+}

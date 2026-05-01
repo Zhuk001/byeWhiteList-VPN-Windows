@@ -1,0 +1,196 @@
+<Window x:Class="ByeWhiteList.Windows.RoutingSettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Настройки"
+        Height="520" Width="560"
+        WindowStartupLocation="CenterOwner"
+        Background="#1E1E1E"
+        Foreground="White"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        MinHeight="420" MinWidth="520">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="0,0,0,1"
+                MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+            <Grid Height="44" Margin="12,0,12,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                    <TextBlock Text="Настройки маршрутизации" FontSize="14" FontWeight="SemiBold"/>
+                    <TextBlock Text="Настройте правила и исключения" FontSize="11" Foreground="#BBBBBB" Margin="0,2,0,0"/>
+                </StackPanel>
+
+                <Button Grid.Column="1"
+                        Width="32" Height="32"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        Foreground="White"
+                        Cursor="Hand"
+                        Click="Cancel_Click"
+                        ToolTip="Закрыть">
+                    <TextBlock Text="✕" FontSize="16" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Button>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                <TextBlock Text="Выберите, какие сайты открывать напрямую, а какие — через VPN. При необходимости добавьте свои исключения."
+                           Foreground="#BBBBBB" TextWrapping="Wrap"/>
+            </StackPanel>
+
+            <TabControl x:Name="MainTabControl" Grid.Row="1" Background="#1E1E1E" BorderBrush="#444444">
+                <TabItem Header="Правила">
+                    <Grid Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Выберите страну для прямого трафика" FontWeight="SemiBold" Foreground="White"/>
+                        <ComboBox Grid.Row="1"
+                                  x:Name="GeoProfileComboBox"
+                                  Margin="0,6,0,0"
+                                  Background="White"
+                                  Foreground="#111111"
+                                  BorderBrush="#444444"
+                                  BorderThickness="1"
+                                  Padding="6"
+                                  DisplayMemberPath="DisplayName"
+                                  SelectedValuePath="Id">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="Foreground" Value="#111111"/>
+                                    <Setter Property="Background" Value="White"/>
+                                    <Setter Property="Padding" Value="6,4"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsHighlighted" Value="True">
+                                            <Setter Property="Background" Value="#EEEEEE"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#DDDDDD"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+
+                        <CheckBox Grid.Row="2"
+                                  x:Name="GeoAutoUpdateCheckBox"
+                                  Content="Автообновлять geosite/geoip (раз в неделю, в фоне)"
+                                  Margin="0,10,0,0"
+                                  Foreground="#DDDDDD"/>
+
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button x:Name="UpdateGeoDataButton" Content="Обновить geosite/geoip" Width="190" Click="UpdateGeoDataButton_Click"/>
+                            <TextBlock x:Name="GeoDataStatusText"
+                                       Margin="12,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Foreground="#BBBBBB"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="4"
+                                   Margin="0,12,0,0"
+                                   Foreground="#BBBBBB"
+                                   TextWrapping="Wrap"
+                                   Text="Изменения применяются при следующем подключении VPN."/>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="Исключения">
+                    <Grid Margin="0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <DockPanel Grid.Row="0" Margin="10,10,10,8">
+                            <TextBlock Text="Поиск:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBox x:Name="SearchTextBox"
+                                     Width="300"
+                                     VerticalAlignment="Center"
+                                     Background="#111111"
+                                     Foreground="White"
+                                     BorderBrush="#444444"
+                                     BorderThickness="1"
+                                     Padding="6"
+                                     KeyDown="SearchTextBox_KeyDown"/>
+                            <Button Content="Далее" Margin="10,0,0,0" Click="FindNext_Click"/>
+                            <Button Content="Очистить" Margin="10,0,0,0" Click="ClearSearch_Click"/>
+                        </DockPanel>
+
+                        <TabControl x:Name="ListsTabControl" Grid.Row="1" Margin="10,0,10,10" Background="#1E1E1E" BorderBrush="#444444">
+                            <TabItem Header="DIRECT (мимо VPN)">
+                                <Grid Margin="10">
+                                    <TextBox x:Name="ForceDirectDomainsTextBox"
+                                             AcceptsReturn="True"
+                                             VerticalScrollBarVisibility="Auto"
+                                             HorizontalScrollBarVisibility="Auto"
+                                             Background="#111111"
+                                             Foreground="White"
+                                             BorderBrush="#444444"
+                                             BorderThickness="1"
+                                             FontFamily="Consolas"
+                                             FontSize="13"
+                                             Padding="10"/>
+                                </Grid>
+                            </TabItem>
+                            <TabItem Header="VPN (принудительно)">
+                                <Grid Margin="10">
+                                    <TextBox x:Name="ForceProxyDomainsTextBox"
+                                             AcceptsReturn="True"
+                                             VerticalScrollBarVisibility="Auto"
+                                             HorizontalScrollBarVisibility="Auto"
+                                             Background="#111111"
+                                             Foreground="White"
+                                             BorderBrush="#444444"
+                                             BorderThickness="1"
+                                             FontFamily="Consolas"
+                                             FontSize="13"
+                                             Padding="10"/>
+                                </Grid>
+                            </TabItem>
+                        </TabControl>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+
+            <Grid Grid.Row="2" Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="Сохраните настройки и переподключите VPN."
+                           Foreground="#BBBBBB"
+                           TextWrapping="Wrap"
+                           VerticalAlignment="Center"
+                           Margin="0,0,12,0"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Отмена" Width="110" Margin="0,0,10,0" Click="Cancel_Click"/>
+                    <Button Content="Сохранить" Width="110" Background="#4CAF50" Foreground="White" Click="Save_Click"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
